@@ -101,12 +101,13 @@ export default async function handler(req, res) {
       face: cardInfo.face,
       fans: cardInfo.fans,
       attention: cardInfo.attention,
-      // 核心修改：使用专用接口数据，且字段名为 snake_case (live_status)
       is_live: targetLiveInfo.live_status === 1, 
       live_title: targetLiveInfo.title || "",
       live_url: targetLiveInfo.room_id ? `https://live.bilibili.com/${targetLiveInfo.room_id}` : "",
-      // cover_from_user 通常是用户上传的封面
-      live_cover: targetLiveInfo.cover_from_user || targetLiveInfo.keyframe || ""
+      live_cover: targetLiveInfo.cover_from_user || targetLiveInfo.keyframe || "",
+      // 直播分区：area_v2_* 是新版字段，兼容旧版 area_name / parent_name
+      live_area: targetLiveInfo.area_v2_name || targetLiveInfo.area_name || "",
+      live_area_parent: targetLiveInfo.area_v2_parent_name || targetLiveInfo.parent_name || ""
     };
 
     // 7. 返回合并后的数据
