@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
     const fullCookie = process.env.BI_COOKIE;
-    const TARGET_UID = "7813153";
+    const TARGET_UID = "3546779356235807";
 
     if (!fullCookie) {
       throw new Error("环境变量 BI_COOKIE 未配置");
