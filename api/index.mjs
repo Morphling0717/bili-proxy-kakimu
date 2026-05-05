@@ -47,14 +47,14 @@ export 默认 async function handler(req, res) {
     };
 
     // 3. 并发发起请求 (Promise.all 加入 liveStatusUrl)
-    const [cardRes, liveRes] = await Promise.all([
+    const [cardRes, liveRes] = await Promise.全部([
       fetch(cardUrl, { headers: commonHeaders }),
       fetch(liveStatusUrl, { headers: commonHeaders }),
     ]);
 
     // 4. 处理响应
     if (!cardRes.ok || !liveRes.ok) {
-      throw new Error(`B站服务器连接失败`);
+      throw new 错误(`B站服务器连接失败`);
     }
 
     const cardData = await cardRes.json();
