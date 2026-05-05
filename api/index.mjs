@@ -31,6 +31,16 @@ export default async function handler(req, res) {
     const buildDynamicUrl = (offsetDynamicId) =>
       `https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history?host_uid=${TARGET_UID}&offset_dynamic_id=${encodeURIComponent(offsetDynamicId)}&need_top=${offsetDynamicId === "0" ? 1 : 0}&platform=web`;
     const dynamicUrl = buildDynamicUrl("0");
+    const parseDynamicResponse = async (response) => {
+      const text = await response.text();
+      const quotedNextOffset = text.match(/"next_offset"\s*:\s*"([^"]+)"/);
+      const numericNextOffset = text.match(/"next_offset"\s*:\s*(\d+)/);
+
+      return {
+        data: JSON.parse(text),
+        nextOffset: quotedNextOffset?.[1] || numericNextOffset?.[1] || "",
+      };
+    };
 
     // 接口 B: 用户名片 (用于获取头像、粉丝数、关注数)
     const cardUrl = `https://api.bilibili.com/x/web-interface/card?mid=${TARGET_UID}&photo=true`;
@@ -59,7 +69,8 @@ export default async function handler(req, res) {
       throw new Error(`B站服务器连接失败`);
     }
 
-    const dynamicData = await dynamicRes.json();
+    const { data: dynamicData, nextOffset: firstNextOffset } =
+      await parseDynamicResponse(dynamicRes);
     const cardData = await cardRes.json();
     const liveDataRaw = await liveRes.json();
 
@@ -114,9 +125,7 @@ export default async function handler(req, res) {
 
     appendVideosFromCards(dynamicData.data?.cards || []);
 
-    let offsetDynamicId = dynamicData.data?.next_offset
-      ? String(dynamicData.data.next_offset)
-      : "";
+    let offsetDynamicId = firstNextOffset;
     let hasMore =
       dynamicData.data?.has_more !== 0 && dynamicData.data?.has_more !== false;
     let fetchedDynamicPages = 1;
@@ -136,7 +145,8 @@ export default async function handler(req, res) {
           break;
         }
 
-        const nextDynamicData = await nextDynamicRes.json();
+        const { data: nextDynamicData, nextOffset } =
+          await parseDynamicResponse(nextDynamicRes);
 
         if (nextDynamicData.code !== 0) {
           break;
@@ -145,7 +155,6 @@ export default async function handler(req, res) {
         appendVideosFromCards(nextDynamicData.data?.cards || []);
         fetchedDynamicPages += 1;
 
-        const nextOffset = nextDynamicData.data?.next_offset;
         hasMore =
           nextDynamicData.data?.has_more !== 0 &&
           nextDynamicData.data?.has_more !== false;
